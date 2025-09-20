@@ -18,7 +18,9 @@ func LoadConfig(from string) *Config {
 
 	switch from {
 	case "config":
-		panic("config file loading not implemented")
+		getter := NewFileGetter()
+		getter.Load(".config.stash")
+		load(&cfg, getter)
 	case "cli":
 		getter := NewCLIGetter()
 		getter.Run()
