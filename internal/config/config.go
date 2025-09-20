@@ -50,7 +50,7 @@ func load(cfg *Config, getter Getter) {
 		parts := strings.Split(tag, ",")
 		tag = parts[0]
 		val := getter.Get(tag)
-		isZeroValue := reflect.ValueOf(val).IsZero()
+		isZeroValue := val == nil || reflect.ValueOf(val).IsZero()
 
 		if slices.Contains(parts, "required") && isZeroValue {
 			panic(fmt.Sprintf("missing required config: %s", tag))
