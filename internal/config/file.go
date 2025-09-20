@@ -21,6 +21,13 @@ func (f *FileGetter) Get(key string) any {
 	return val
 }
 
+// Load reads a configuration file from the specified filePath, parses its contents,
+// and stores key-value pairs into the FileGetter's data map. The method resolves
+// the absolute path using the current working directory and the provided filePath.
+// It ignores empty lines and lines starting with '#' or '//' (treated as comments).
+// Each non-comment, non-empty line is expected to be in the format "key = value".
+// Lines not matching this format are skipped. If any error occurs while obtaining
+// the working directory or reading the file, the method panics.
 func (f *FileGetter) Load(filePath string) {
 	cwd, err := os.Getwd()
 	if err != nil {

@@ -47,6 +47,21 @@ type Getter interface {
 	Get(string) any
 }
 
+// load populates the fields of the provided Config struct pointer (cfg) using values
+// obtained from the given Getter interface. It uses reflection to iterate over the struct
+// fields, reading the "cfg" struct tag to determine the configuration key, and optional
+// modifiers such as "required" and "default:<value>".
+//
+// For each field with a "cfg" tag:
+//   - If the tag contains "required" and the value is missing, it panics.
+//   - If the value is missing but a "default" is specified, it uses the default value.
+//   - Supports string and int field types, converting values as needed.
+//   - Panics if a required value is missing, or if a value cannot be converted to the
+//     appropriate type.
+//
+// Example tag: `cfg:"my_key,required,default:42"`
+//
+// Panics on missing required fields, invalid default values, or unsupported field types.
 func load(cfg *Config, getter Getter) {
 	typ := reflect.TypeOf(*cfg)
 	val := reflect.ValueOf(cfg).Elem()
