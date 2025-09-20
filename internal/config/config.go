@@ -18,7 +18,7 @@ func LoadConfig(from string) *Config {
 
 	switch from {
 	case "config":
-		panic("not implemented")
+		panic("config file loading not implemented")
 	case "cli":
 		getter := NewCLIGetter()
 		getter.Run()
