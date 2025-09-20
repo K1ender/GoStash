@@ -2,7 +2,7 @@ package config
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -27,8 +27,8 @@ func (f *FileGetter) Load(filePath string) {
 		panic(err)
 	}
 
-	filepath := path.Join(cwd, filePath)
-	file, err := os.ReadFile(filepath)
+	fullPath := filepath.Join(cwd, filePath)
+	file, err := os.ReadFile(fullPath)
 
 	if err != nil {
 		panic(err)
