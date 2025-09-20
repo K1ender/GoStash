@@ -13,13 +13,14 @@ func NewCLIGetter() *CLIGetter {
 }
 
 func (c *CLIGetter) Run() {
-	hostPtr := flag.String("host", "", "server host")
-	portPtr := flag.Int("port", 0, "server port")
+	flag.String("host", "", "server host")
+	flag.Int("port", 0, "server port")
 
 	flag.Parse()
 
-	c.args["host"] = *hostPtr
-	c.args["port"] = *portPtr
+	flag.Visit(func(f *flag.Flag) {
+		c.args[f.Name] = f.Value.String()
+	})
 }
 
 func (c *CLIGetter) Get(key string) any {

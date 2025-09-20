@@ -74,10 +74,22 @@ func load(cfg *Config, getter Getter) {
 
 		switch f.Kind() {
 		case reflect.String:
-			f.SetString(val.(string))
+			f.SetString(fmt.Sprint(val))
 		case reflect.Int:
-			intVal := val.(int)
-			f.SetInt(int64(intVal))
+			var intVal int64
+			var err error
+			switch v := val.(type) {
+			case int:
+				intVal = int64(v)
+			case string:
+				intVal, err = strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					panic(fmt.Sprintf("could not parse int for %s: %v", tag, val))
+				}
+			default:
+				panic(fmt.Sprintf("unsupported type %T for int field %s", val, tag))
+			}
+			f.SetInt(intVal)
 		}
 	}
 }
