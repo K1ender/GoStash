@@ -12,6 +12,10 @@ func NewCLIGetter() *CLIGetter {
 	}
 }
 
+// Run parses command-line flags for "host" and "port", and stores their values
+// in the CLIGetter's args map. It uses the standard flag package to define and
+// parse the flags, then iterates over the set flags to populate the args map
+// with their names and values.
 func (c *CLIGetter) Run() {
 	flag.String("host", "", "server host")
 	flag.Int("port", 0, "server port")
