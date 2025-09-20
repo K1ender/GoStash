@@ -24,10 +24,6 @@ func (c *CLIGetter) Run() {
 }
 
 func (c *CLIGetter) Get(key string) any {
-	val, ok := c.args[key]
-	if !ok {
-		return nil
-	}
-
+	val := c.args[key]
 	return val
 }
