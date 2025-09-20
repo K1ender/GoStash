@@ -14,7 +14,7 @@ func main() {
 	var cfg *config.Config
 
 	if *filepath != "" {
-		cfg = config.LoadConfig("config")
+		cfg = config.LoadConfig("config", config.WithConfigPath(*filepath))
 	} else {
 		cfg = config.LoadConfig("cli")
 	}

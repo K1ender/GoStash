@@ -11,15 +11,28 @@ import (
 type Config struct {
 	Host string `cfg:"host,default:localhost"`
 	Port int    `cfg:"port,default:8080"`
+
+	ConfigPath string
 }
 
-func LoadConfig(from string) *Config {
+type Arg func(cfg *Config)
+
+func WithConfigPath(path string) Arg {
+	return func(cfg *Config) {
+		cfg.ConfigPath = path
+	}
+}
+
+func LoadConfig(from string, args ...Arg) *Config {
 	var cfg Config
+	for _, arg := range args {
+		arg(&cfg)
+	}
 
 	switch from {
 	case "config":
 		getter := NewFileGetter()
-		getter.Load(".config.stash")
+		getter.Load(cfg.ConfigPath)
 		load(&cfg, getter)
 	case "cli":
 		getter := NewCLIGetter()
