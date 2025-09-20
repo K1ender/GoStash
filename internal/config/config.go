@@ -53,7 +53,7 @@ func load(cfg *Config, getter Getter) {
 		isZeroValue := val == nil || reflect.ValueOf(val).IsZero()
 
 		if slices.Contains(parts, "required") && isZeroValue {
-			panic(fmt.Sprintf("missing required config: %s", tag))
+			panic(fmt.Sprintf("missing required configuration field: %s", tag))
 		} else if isZeroValue {
 			for _, part := range parts[1:] {
 				if after, ok := strings.CutPrefix(part, "default:"); ok {
