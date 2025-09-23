@@ -27,6 +27,7 @@ func (s *Server) Start() {
 		),
 	)
 	if err != nil {
+		// FIXME: proper logging
 		panic(err)
 	}
 	defer conn.Close()

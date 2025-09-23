@@ -29,7 +29,7 @@ func (h *Handler) Handle(client net.Conn) {
 
 	_, err := client.Read(cmd[:])
 	if err != nil {
-		client.Write([]byte("ERR\r\n"))
+		client.Write([]byte(ErrResponse))
 		client.Close()
 		return
 	}
@@ -39,20 +39,20 @@ func (h *Handler) Handle(client net.Conn) {
 		handler := h.handlers[GetCommand]
 		response, err := handler.Handle(GetCommand)
 		if err != nil {
-			client.Write([]byte("ERR\r\n"))
+			client.Write([]byte(ErrResponse))
 			client.Close()
 			return
 		}
 
 		data, err := response.Serialize()
 		if err != nil {
-			client.Write([]byte("ERR\r\n"))
+			client.Write([]byte(ErrResponse))
 			client.Close()
 			return
 		}
 
 		client.Write(append(data, []byte("\r\n")...))
 	default:
-		client.Write([]byte("ERR\r\n"))
+		client.Write([]byte(ErrResponse))
 	}
 }
