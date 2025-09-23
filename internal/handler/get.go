@@ -18,13 +18,13 @@ type GetRequest struct {
 }
 
 func (r *GetRequest) Serialize() []byte {
-	var buf []byte
-	buf = append(buf, []byte(r.Command)...)
-	buf = append(buf, 0)
-	buf = append(buf, []byte(strconv.Itoa(r.KeyLen))...)
-	buf = append(buf, 0)
-	buf = append(buf, []byte(r.Key)...)
-	return buf
+	var buf bytes.Buffer
+	buf.WriteString(r.Command)
+	buf.WriteByte(0)
+	buf.WriteString(strconv.Itoa(r.KeyLen))
+	buf.WriteByte(0)
+	buf.WriteString(r.Key)
+	return buf.Bytes()
 }
 
 func DeserializeGet(data []byte) (*GetRequest, error) {
