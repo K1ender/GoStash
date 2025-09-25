@@ -1,0 +1,21 @@
+package main
+
+import "net"
+
+func main() {
+	conn, err := net.Dial("tcp", "localhost:8080")
+	if err != nil {
+		panic(err)
+	}
+
+	conn.Write([]byte("GET\0003\000key\r\n"))
+
+	buf := make([]byte, 1024)
+	n, err := conn.Read(buf)
+	if err != nil {
+		panic(err)
+	}
+	println(string(buf[:n]))
+
+	conn.Close()
+}
