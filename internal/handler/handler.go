@@ -1,13 +1,15 @@
 package handler
 
-import "net"
+import (
+	"net"
+)
 
 type Response interface {
 	Serialize() ([]byte, error)
 }
 
 type CommandHandler interface {
-	Handle(command HandlerCommand) (Response, error)
+	Handle(command string) (Response, error)
 }
 
 type Handler struct {
@@ -25,7 +27,7 @@ func NewHandler() *Handler {
 }
 
 func (h *Handler) Handle(client net.Conn) {
-	cmd := [3]byte{}
+	cmd := [1024]byte{}
 
 	_, err := client.Read(cmd[:])
 	if err != nil {
@@ -34,10 +36,10 @@ func (h *Handler) Handle(client net.Conn) {
 		return
 	}
 
-	switch HandlerCommand(cmd[:]) {
+	switch HandlerCommand(cmd[:3]) {
 	case GetCommand:
 		handler := h.handlers[GetCommand]
-		response, err := handler.Handle(GetCommand)
+		response, err := handler.Handle(string(cmd[:]))
 		if err != nil {
 			client.Write([]byte(ErrResponse))
 			client.Close()
@@ -51,7 +53,7 @@ func (h *Handler) Handle(client net.Conn) {
 			return
 		}
 
-		client.Write(append(data, []byte("\r\n")...))
+		client.Write(data)
 	default:
 		client.Write([]byte(ErrResponse))
 	}

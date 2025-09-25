@@ -3,6 +3,7 @@ package handler
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strconv"
 )
 
@@ -70,7 +71,8 @@ type GetHandler struct {
 	// todo: add fields if necessary
 }
 
-func (h *GetHandler) Handle(command HandlerCommand) (Response, error) {
+func (h *GetHandler) Handle(command string) (Response, error) {
+	fmt.Println(command)
 	return &GetResponse{Value: "GET command executed"}, nil
 }
 
