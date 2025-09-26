@@ -36,30 +36,34 @@ func (h *Handler) Handle(client net.Conn) {
 
 	_, err := client.Read(cmd[:])
 	if err != nil {
-		client.Write(ErrResponse)
-		client.Close()
+		h.fail(client)
 		return
 	}
+
+	var response Response
 
 	switch HandlerCommand(cmd[:3]) {
 	case GetCommand:
 		handler := h.handlers[GetCommand]
-		response, err := handler.Handle(cmd[:])
+		response, err = handler.Handle(cmd[:])
 		if err != nil {
-			client.Write(ErrResponse)
-			client.Close()
+			h.fail(client)
 			return
 		}
-
-		data, err := response.Serialize()
-		if err != nil {
-			client.Write(ErrResponse)
-			client.Close()
-			return
-		}
-
-		client.Write(data)
 	default:
-		client.Write(ErrResponse)
+		h.fail(client)
+		return
 	}
+
+	data, err := response.Serialize()
+	if err != nil {
+		h.fail(client)
+		return
+	}
+
+	client.Write(data)
+}
+
+func (h *Handler) fail(c net.Conn) {
+	c.Write(ErrResponse)
 }

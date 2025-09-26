@@ -72,7 +72,7 @@ type GetResponse struct {
 }
 
 func (r *GetResponse) Serialize() ([]byte, error) {
-	return []byte(r.Value), nil
+	return []byte(r.Value + "\r\n"), nil
 }
 
 type GetHandler struct {
