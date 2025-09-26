@@ -26,6 +26,9 @@ func NewHandler() *Handler {
 	getHandler := NewGetHandler(store)
 	handlers[GetCommand] = getHandler
 
+	setHandler := NewSetHandler(store)
+	handlers[SetCommand] = setHandler
+
 	return &Handler{
 		handlers: handlers,
 	}
@@ -37,36 +40,45 @@ func NewHandler() *Handler {
 // and the connection is closed. Currently, only the GetCommand is supported; all other
 // commands result in an error response.
 func (h *Handler) Handle(client net.Conn) {
-	cmd := [1024]byte{}
+	for {
+		cmd := [1024]byte{}
 
-	_, err := client.Read(cmd[:])
-	if err != nil {
-		h.fail(client)
-		return
-	}
-
-	var response Response
-
-	switch HandlerCommand(cmd[:3]) {
-	case GetCommand:
-		handler := h.handlers[GetCommand]
-		response, err = handler.Handle(cmd[:])
+		_, err := client.Read(cmd[:])
 		if err != nil {
 			h.fail(client)
 			return
 		}
-	default:
-		h.fail(client)
-		return
-	}
 
-	data, err := response.Serialize()
-	if err != nil {
-		h.fail(client)
-		return
-	}
+		var response Response
 
-	client.Write(data)
+		switch HandlerCommand(cmd[:3]) {
+		case GetCommand:
+			handler := h.handlers[GetCommand]
+			response, err = handler.Handle(cmd[:])
+			if err != nil {
+				h.fail(client)
+				return
+			}
+		case SetCommand:
+			handler := h.handlers[SetCommand]
+			response, err = handler.Handle(cmd[:])
+			if err != nil {
+				h.fail(client)
+				return
+			}
+		default:
+			h.fail(client)
+			return
+		}
+
+		data, err := response.Serialize()
+		if err != nil {
+			h.fail(client)
+			return
+		}
+
+		client.Write(data)
+	}
 }
 
 func (h *Handler) fail(c net.Conn) {

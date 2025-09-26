@@ -8,10 +8,17 @@ func main() {
 		panic(err)
 	}
 
-	conn.Write([]byte("GET\0003\000key"))
-
+	conn.Write([]byte("SET\0003\000key\0005\000value\r\n"))
 	buf := make([]byte, 1024)
 	n, err := conn.Read(buf)
+	if err != nil {
+		panic(err)
+	}
+	println(string(buf[:n]))
+
+	conn.Write([]byte("GET\0003\000key\r\n"))
+	buf = make([]byte, 1024)
+	n, err = conn.Read(buf)
 	if err != nil {
 		panic(err)
 	}
