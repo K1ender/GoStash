@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"strconv"
+
+	"github.com/k1ender/go-stash/internal/store"
 )
 
 // GET\03\0key\r\n
@@ -37,7 +39,7 @@ func (r *GetRequest) Serialize() []byte {
 // Returns an error if the format is invalid or if the key length does not match
 // the provided value.
 func DeserializeGet(data []byte) (*GetRequest, error) {
-	i1 := bytes.IndexByte(data, 0)
+	i1 := 3
 	if i1 == -1 {
 		return nil, errors.New("invalid format: no first delimiter")
 	}
@@ -76,7 +78,13 @@ func (r *GetResponse) Serialize() ([]byte, error) {
 }
 
 type GetHandler struct {
-	// todo: add fields if necessary
+	store store.Store
+}
+
+func NewGetHandler(store store.Store) *GetHandler {
+	return &GetHandler{
+		store: store,
+	}
 }
 
 func (h *GetHandler) Handle(command []byte) (Response, error) {
@@ -84,9 +92,11 @@ func (h *GetHandler) Handle(command []byte) (Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &GetResponse{Value: cmd.Key}, nil
-}
 
-func NewGetHandler() *GetHandler {
-	return &GetHandler{}
+	value, err := h.store.Get(cmd.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GetResponse{Value: value}, nil
 }

@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net"
+
+	"github.com/k1ender/go-stash/internal/store"
 )
 
 type Response interface {
@@ -17,8 +19,11 @@ type Handler struct {
 }
 
 func NewHandler() *Handler {
+	store := store.NewHashMapStore()
+
 	handlers := make(map[HandlerCommand]CommandHandler)
-	getHandler := NewGetHandler()
+
+	getHandler := NewGetHandler(store)
 	handlers[GetCommand] = getHandler
 
 	return &Handler{
