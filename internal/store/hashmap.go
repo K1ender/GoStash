@@ -1,7 +1,10 @@
 package store
 
+import "sync"
+
 type HashMapStore struct {
 	data map[string]string
+	rw   sync.RWMutex
 }
 
 func NewHashMapStore() *HashMapStore {
@@ -11,6 +14,8 @@ func NewHashMapStore() *HashMapStore {
 }
 
 func (s *HashMapStore) Get(key string) (string, error) {
+	s.rw.RLock()
+	defer s.rw.RUnlock()
 	if value, exists := s.data[key]; exists {
 		return value, nil
 	}
@@ -18,6 +23,8 @@ func (s *HashMapStore) Get(key string) (string, error) {
 }
 
 func (s *HashMapStore) Set(key, value string) error {
+	s.rw.Lock()
+	defer s.rw.Unlock()
 	s.data[key] = value
 	return nil
 }
