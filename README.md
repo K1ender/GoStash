@@ -6,56 +6,210 @@ GoStash is a lightweight in-memory key-value cache inspired by Redis and Memcach
 
 ## Features
 
-- In-memory key-value storage
-- Simple and minimal configuration system
-- CLI for running the server and loading configuration
-- Small codebase intended for learning, experimentation and lightweight caching
+- **In-memory key-value storage** - Fast HashMap-based storage with thread-safe operations
+- **Binary protocol support** - Custom binary protocol for efficient communication
+- **Configurable server** - Support for both file-based and CLI configuration
+- **Concurrent client handling** - Each client connection handled in a separate goroutine
+- **Basic commands** - GET and SET operations with proper serialization
+- **Small codebase** - Intended for learning, experimentation and lightweight caching
 
 > Note: GoStash is an independent project and not a drop-in replacement for Redis or Memcached. Protocol and feature set are intentionally minimal.
 
-## Repo layout
+## Architecture
 
-- `cmd/server/` - server binary entrypoint
-- `internal/config/` - configuration loading and CLI helpers
-- `internal/server/` - server implementation
+GoStash follows a clean, modular architecture:
 
-## Quick start
+### Core Components
 
-Requirements:
+- **Server** (`internal/server/`) - TCP server with concurrent connection handling
+- **Handler** (`internal/handler/`) - Command processing and protocol implementation
+- **Store** (`internal/store/`) - Thread-safe in-memory storage backend
+- **Config** (`internal/config/`) - Configuration management with file and CLI support
 
-- Go 1.25+ installed
+### Protocol
 
-Build and run the server locally:
+GoStash uses a custom binary protocol:
 
-PowerShell (Windows):
+- **GET**: `GET\0<keyLen>\0<key>\r\n`
+- **SET**: `SET\0<keyLen>\0<key>\0<valueLen>\0<value>\r\n`
 
-```powershell
-go build -o gostash ./cmd/server
-# run the server with default settings
-./gostash.exe
+## Project Structure
+
+```
+├── cmd/
+│   ├── server/          # Server binary entrypoint
+│   └── client/          # Example client implementation
+├── internal/
+│   ├── config/          # Configuration loading and CLI helpers
+│   │   ├── config.go    # Core configuration logic
+│   │   ├── cli.go       # Command-line argument parsing
+│   │   └── file.go      # File-based configuration
+│   ├── handler/         # Command handlers and protocol
+│   │   ├── handler.go   # Main handler coordination
+│   │   ├── get.go       # GET command implementation
+│   │   ├── set.go       # SET command implementation
+│   │   ├── commands.go  # Command definitions
+│   │   └── responses.go # Response utilities
+│   ├── server/          # TCP server implementation
+│   └── store/           # Storage backends
+│       ├── store.go     # Storage interface
+│       └── hashmap.go   # HashMap implementation
+├── .config.stash.example # Example configuration file
+└── go.mod
 ```
 
-Or using `go run`:
+## Quick Start
+
+### Requirements
+
+- Go 1.25.1+ installed
+
+### Building and Running
+
+**Build the server:**
 
 ```powershell
+go build -o gostash.exe ./cmd/server
+```
+
+**Run with default settings:**
+
+```powershell
+# Using the built binary
+./gostash.exe
+
+# Or directly with go run
 go run ./cmd/server
 ```
 
-The server will start and listen on the configured address (see Configuration below).
+**Run with custom configuration:**
+
+```powershell
+# Using command line flags
+./gostash.exe --host localhost --port 8080
+
+# Using configuration file
+./gostash.exe --config .config.stash.example
+```
+
+The server will start and listen on the configured address (default: `localhost:19201`).
+
+### Testing the Server
+
+You can test the server using the included client example:
+
+```powershell
+# In another terminal, run the test client
+go run ./cmd/client
+```
+
+Or manually connect using telnet/netcat to test the binary protocol.
 
 ## Configuration
 
-Configuration is handled by the `internal/config` package. The project supports loading configuration from files and command-line flags. Typical settings include server listen address, storage limits, and logging options.
+GoStash supports flexible configuration through both configuration files and command-line arguments:
 
-Example configuration:
+### Configuration Options
+
+- `host` - Server listen address (default: `localhost`)
+- `port` - Server listen port (default: `19201`)
+
+### Configuration Methods
+
+**1. Command Line Flags:**
+
+```powershell
+./gostash.exe --host 0.0.0.0 --port 8080
+```
+
+**2. Configuration File:**
+
+Create a configuration file (e.g., `.config.stash`):
 
 ```text
 host=localhost
 port=8080
 ```
 
-To pass a configuration file or flags, use the CLI options exposed by the `cmd/server` binary. For example:
+Then run:
 
 ```powershell
-.\gostash.exe --config path\to\.config.stash
+./gostash.exe --config .config.stash
 ```
+
+**3. Default Configuration:**
+
+If no configuration is provided, the server uses defaults and can be customized via CLI flags.
+
+### Example Configuration File
+
+An example configuration file is provided as `.config.stash.example`:
+
+```text
+host=localhost
+port=8080
+```
+
+## Protocol Documentation
+
+GoStash implements a simple binary protocol for client-server communication:
+
+### GET Command
+
+**Format:** `GET\0<keyLen>\0<key>\r\n`
+
+**Example:** To get the value for key "mykey":
+
+```
+GET\0005\0mykey\r\n
+```
+
+### SET Command
+
+**Format:** `SET\0<keyLen>\0<key>\0<valueLen>\0<value>\r\n`
+
+**Example:** To set key "mykey" to value "myvalue":
+
+```
+SET\0005\0mykey\0007\0myvalue\r\n
+```
+
+### Response Format
+
+- **Success:** Returns the requested value followed by `\r\n`
+- **Error:** Returns `ERR` status code
+
+## Development
+
+### Running Tests
+
+```powershell
+go test ./...
+```
+
+### Building for Production
+
+```powershell
+go build -ldflags="-s -w" -o gostash.exe ./cmd/server
+```
+
+### Client Example
+
+The repository includes a working client example in `cmd/client/main.go` that demonstrates:
+
+- Connecting to the server
+- Sending SET command
+- Sending GET command
+- Reading responses
+
+You can use this as a reference for implementing your own clients.
+
+## Contributing
+
+This project is designed for educational purposes and experimentation. Feel free to:
+
+- Add new commands
+- Implement additional storage backends
+- Improve the protocol
+- Add monitoring and metrics
+- Enhance configuration options
