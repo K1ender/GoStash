@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/k1ender/go-stash/internal/config"
+	"github.com/k1ender/go-stash/internal/server"
 )
 
 func main() {
@@ -19,5 +19,7 @@ func main() {
 		cfg = config.LoadConfig("cli")
 	}
 
-	fmt.Printf("Server starting at %s:%d\n", cfg.Host, cfg.Port)
+	srv := server.NewServer(cfg)
+
+	srv.Start()
 }
