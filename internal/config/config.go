@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	Host string `cfg:"host,default:localhost"`
-	Port int    `cfg:"port,default:8080"`
+	Port int    `cfg:"port,default:19201"`
 
 	ConfigPath string
 }
