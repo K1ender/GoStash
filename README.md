@@ -1,5 +1,7 @@
 # GoStash
 
+<img src="./logo.png" />
+
 GoStash is a lightweight in-memory key-value cache inspired by Redis and Memcached. It aims to provide a simple, fast, and easy-to-run caching server for development and small production use-cases. The project is written in Go and follows a minimal design that focuses on low-latency operations and simple configuration.
 
 ## Features
