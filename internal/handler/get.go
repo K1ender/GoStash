@@ -3,7 +3,6 @@ package handler
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"strconv"
 )
 
@@ -28,6 +27,15 @@ func (r *GetRequest) Serialize() []byte {
 	return buf.Bytes()
 }
 
+// DeserializeGet parses a byte slice into a GetRequest struct.
+// The expected format of the input data is:
+//
+//	<command>\x00<keyLen>\x00<key>
+//
+// where <command> is a string, <keyLen> is the length of the key as a string,
+// and <key> is the key itself. Each section is separated by a null byte (0).
+// Returns an error if the format is invalid or if the key length does not match
+// the provided value.
 func DeserializeGet(data []byte) (*GetRequest, error) {
 	i1 := bytes.IndexByte(data, 0)
 	if i1 == -1 {
@@ -47,7 +55,7 @@ func DeserializeGet(data []byte) (*GetRequest, error) {
 		return nil, err
 	}
 
-	key := string(data[i2+1 : i2+keyLen+1]) // Exclude \r\n
+	key := string(data[i2+1 : i2+keyLen+1])
 	if len(key) != keyLen {
 		return nil, errors.New("key length mismatch")
 	}
@@ -71,12 +79,11 @@ type GetHandler struct {
 	// todo: add fields if necessary
 }
 
-func (h *GetHandler) Handle(command string) (Response, error) {
-	cmd, err := DeserializeGet([]byte(command))
+func (h *GetHandler) Handle(command []byte) (Response, error) {
+	cmd, err := DeserializeGet(command)
 	if err != nil {
-		return nil, fmt.Errorf("failed to deserialize GET command: %w", err)
+		return nil, err
 	}
-
 	return &GetResponse{Value: cmd.Key}, nil
 }
 

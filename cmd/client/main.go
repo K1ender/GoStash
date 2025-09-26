@@ -8,7 +8,7 @@ func main() {
 		panic(err)
 	}
 
-	conn.Write([]byte("GET\0003\000key\r\n"))
+	conn.Write([]byte("GET\0003\000key"))
 
 	buf := make([]byte, 1024)
 	n, err := conn.Read(buf)

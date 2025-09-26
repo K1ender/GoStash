@@ -9,7 +9,7 @@ type Response interface {
 }
 
 type CommandHandler interface {
-	Handle(command string) (Response, error)
+	Handle(cmd []byte) (Response, error)
 }
 
 type Handler struct {
@@ -26,12 +26,17 @@ func NewHandler() *Handler {
 	}
 }
 
+// Handle processes an incoming client connection by reading a command from the client,
+// dispatching it to the appropriate handler based on the command type, and writing the
+// response back to the client. If an error occurs at any stage, an error response is sent
+// and the connection is closed. Currently, only the GetCommand is supported; all other
+// commands result in an error response.
 func (h *Handler) Handle(client net.Conn) {
 	cmd := [1024]byte{}
 
 	_, err := client.Read(cmd[:])
 	if err != nil {
-		client.Write([]byte(ErrResponse))
+		client.Write(ErrResponse)
 		client.Close()
 		return
 	}
@@ -39,22 +44,22 @@ func (h *Handler) Handle(client net.Conn) {
 	switch HandlerCommand(cmd[:3]) {
 	case GetCommand:
 		handler := h.handlers[GetCommand]
-		response, err := handler.Handle(string(cmd[:]))
+		response, err := handler.Handle(cmd[:])
 		if err != nil {
-			client.Write([]byte(ErrResponse))
+			client.Write(ErrResponse)
 			client.Close()
 			return
 		}
 
 		data, err := response.Serialize()
 		if err != nil {
-			client.Write([]byte(ErrResponse))
+			client.Write(ErrResponse)
 			client.Close()
 			return
 		}
 
 		client.Write(data)
 	default:
-		client.Write([]byte(ErrResponse))
+		client.Write(ErrResponse)
 	}
 }

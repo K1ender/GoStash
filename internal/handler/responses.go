@@ -1,7 +1,7 @@
 package handler
 
-type StatusCode string
+type StatusCode []byte
 
-const (
-	ErrResponse StatusCode = "ERR\r\n"
+var (
+	ErrResponse StatusCode = []byte("ERR")
 )

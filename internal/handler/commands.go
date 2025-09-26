@@ -1,8 +1,8 @@
 package handler
 
 // Command always in uppercase string with len 3
-type HandlerCommand string
+type HandlerCommand [3]byte
 
-const (
-	GetCommand HandlerCommand = "GET"
+var (
+	GetCommand HandlerCommand = [3]byte{'G', 'E', 'T'}
 )
