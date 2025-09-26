@@ -42,12 +42,12 @@ func DeserializeGet(data []byte) (*GetRequest, error) {
 
 	command := string(data[:i1])
 	keyLenStr := string(data[i1+1 : i2])
-	key := string(data[i2+1:])
-
 	keyLen, err := strconv.Atoi(keyLenStr)
 	if err != nil {
 		return nil, err
 	}
+
+	key := string(data[i2+1 : i2+keyLen+1]) // Exclude \r\n
 	if len(key) != keyLen {
 		return nil, errors.New("key length mismatch")
 	}
@@ -72,8 +72,12 @@ type GetHandler struct {
 }
 
 func (h *GetHandler) Handle(command string) (Response, error) {
-	fmt.Println(command)
-	return &GetResponse{Value: "GET command executed"}, nil
+	cmd, err := DeserializeGet([]byte(command))
+	if err != nil {
+		return nil, fmt.Errorf("failed to deserialize GET command: %w", err)
+	}
+
+	return &GetResponse{Value: cmd.Key}, nil
 }
 
 func NewGetHandler() *GetHandler {
