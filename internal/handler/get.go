@@ -26,6 +26,7 @@ func (r *GetRequest) Serialize() []byte {
 	buf.WriteString(strconv.Itoa(r.KeyLen))
 	buf.WriteByte(0)
 	buf.WriteString(r.Key)
+	buf.WriteString("\r\n")
 	return buf.Bytes()
 }
 
