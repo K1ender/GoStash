@@ -40,5 +40,13 @@ func main() {
 	}
 	println(string(buf[:n]))
 
+	conn.Write([]byte("DEC\0003\000key\r\n"))
+	buf = make([]byte, 1024)
+	n, err = conn.Read(buf)
+	if err != nil {
+		panic(err)
+	}
+	println(string(buf[:n]))
+
 	conn.Close()
 }
