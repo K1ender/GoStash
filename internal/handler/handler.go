@@ -32,6 +32,9 @@ func NewHandler() *Handler {
 	incrHandler := NewIncrHandler(store)
 	handlers[IncrCommand] = incrHandler
 
+	decrHandler := NewDecrHandler(store)
+	handlers[DecrCommand] = decrHandler
+
 	return &Handler{
 		handlers: handlers,
 	}
@@ -70,6 +73,13 @@ func (h *Handler) Handle(client net.Conn) {
 		}
 	case IncrCommand:
 		handler := h.handlers[IncrCommand]
+		response, err = handler.Handle(cmd[:])
+		if err != nil {
+			h.fail(client)
+			return
+		}
+	case DecrCommand:
+		handler := h.handlers[DecrCommand]
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)

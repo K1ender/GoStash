@@ -54,3 +54,24 @@ func (s *HashMapStore) Incr(key string) (int, error) {
 	s.data[key] = fmt.Sprintf("%d", intValue)
 	return intValue, nil
 }
+
+func (s *HashMapStore) Decr(key string) (int, error) {
+	s.rw.Lock()
+	defer s.rw.Unlock()
+
+	value, exists := s.data[key]
+	if !exists {
+		s.data[key] = "-1"
+		return -1, nil
+	}
+
+	var intValue int
+	val, err := utils.FastStringToInt(value)
+	if err != nil {
+		return 0, errors.New("value is not an integer")
+	}
+	
+	intValue = val - 1
+	s.data[key] = fmt.Sprintf("%d", intValue)
+	return intValue, nil
+}
