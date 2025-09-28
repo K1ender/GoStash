@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/k1ender/go-stash/internal/constants"
 	"github.com/k1ender/go-stash/internal/store"
 )
 
@@ -35,10 +36,7 @@ func (r *SetRequest) Serialize() []byte {
 
 func DeserializeSet(data []byte) (*SetRequest, error) {
 	// SET\0<keyLen>\0<key>\0<valueLen>\0<value>\r\n
-	i1 := 3
-	if i1 == -1 {
-		return nil, fmt.Errorf("invalid format: no first delimiter")
-	}
+	i1 := constants.CommandKeyLen
 
 	i2 := bytes.IndexByte(data[i1+1:], 0)
 	if i2 == -1 {

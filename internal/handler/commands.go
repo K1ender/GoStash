@@ -4,6 +4,7 @@ package handler
 type HandlerCommand [3]byte
 
 var (
-	GetCommand HandlerCommand = [3]byte{'G', 'E', 'T'}
-	SetCommand HandlerCommand = [3]byte{'S', 'E', 'T'}
+	GetCommand  HandlerCommand = HandlerCommand{'G', 'E', 'T'}
+	SetCommand  HandlerCommand = HandlerCommand{'S', 'E', 'T'}
+	IncrCommand HandlerCommand = HandlerCommand{'I', 'N', 'C'}
 )
