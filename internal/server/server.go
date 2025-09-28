@@ -42,6 +42,10 @@ func (s *Server) Start() {
 			continue
 		}
 
-		go handler.Handle(client)
+		go func(client net.Conn) {
+			for {
+				handler.Handle(client)
+			}
+		}(client)
 	}
 }
