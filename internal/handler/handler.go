@@ -45,13 +45,13 @@ func NewHandler() *Handler {
 // response back to the client. If an error occurs at any stage, an error response is sent
 // and the connection is closed. Currently, only the GetCommand is supported; all other
 // commands result in an error response.
-func (h *Handler) Handle(client net.Conn) {
+func (h *Handler) Handle(client net.Conn) (error) {
 	cmd := [1024]byte{}
 
 	_, err := client.Read(cmd[:])
 	if err != nil {
 		h.fail(client)
-		return
+		return err
 	}
 
 	var response Response
@@ -62,41 +62,42 @@ func (h *Handler) Handle(client net.Conn) {
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)
-			return
+			return nil
 		}
 	case SetCommand:
 		handler := h.handlers[SetCommand]
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)
-			return
+			return nil
 		}
 	case IncrCommand:
 		handler := h.handlers[IncrCommand]
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)
-			return
+			return nil
 		}
 	case DecrCommand:
 		handler := h.handlers[DecrCommand]
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)
-			return
+			return nil
 		}
 	default:
 		h.fail(client)
-		return
+		return nil
 	}
 
 	data, err := response.Serialize()
 	if err != nil {
 		h.fail(client)
-		return
+		return nil
 	}
 
 	client.Write(data)
+	return nil
 }
 
 func (h *Handler) fail(c net.Conn) {

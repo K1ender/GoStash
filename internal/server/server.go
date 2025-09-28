@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 
 	"github.com/k1ender/go-stash/internal/config"
@@ -19,6 +20,12 @@ func NewServer(cfg *config.Config) *Server {
 }
 
 func (s *Server) Start() {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("server crashed", "error", r)
+		}
+	}()
+
 	conn, err := net.Listen(
 		"tcp",
 		net.JoinHostPort(
@@ -43,8 +50,12 @@ func (s *Server) Start() {
 		}
 
 		go func(client net.Conn) {
+			defer client.Close()
 			for {
-				handler.Handle(client)
+				if err := handler.Handle(client); err != nil {
+					slog.Error("error handling client", "error", err)
+					break
+				}
 			}
 		}(client)
 	}
