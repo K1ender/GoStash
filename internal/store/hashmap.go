@@ -73,3 +73,14 @@ func (s *HashMapStore) Decr(key string) (int, error) {
 	s.data[key] = fmt.Sprintf("%d", intValue)
 	return intValue, nil
 }
+
+func (s *HashMapStore) Del(key string) error {
+	s.rw.Lock()
+	defer s.rw.Unlock()
+
+	if _, exists := s.data[key]; !exists {
+		return ErrNotFound
+	}
+	delete(s.data, key)
+	return nil
+}
