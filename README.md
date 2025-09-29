@@ -179,6 +179,18 @@ SET\0005\0mykey\0007\0myvalue\r\n
 - **Success:** Returns the requested value followed by `\r\n`
 - **Error:** Returns `ERR` status code
 
+## Benchmarks
+
+Socket handler performance (12th Gen Intel(R) Core(TM) i5-12400F, Go 1.25.1):
+
+```
+BenchmarkSocketGetHandler-12      946870    1272 ns/op   368 B/op   7 allocs/op
+BenchmarkSocketSetHandler-12      822333    1253 ns/op   368 B/op   7 allocs/op
+BenchmarkSocketIncrHandler-12     925058    1959 ns/op   240 B/op   6 allocs/op
+BenchmarkSocketDecrHandler-12     831534    1208 ns/op   240 B/op   6 allocs/op
+BenchmarkSocketDelHandler-12      446300    3888 ns/op   480 B/op  12 allocs/op
+```
+
 ## Development
 
 ### Running Tests
