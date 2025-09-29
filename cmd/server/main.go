@@ -10,6 +10,7 @@ import (
 func main() {
 	filepath := flag.String("config", "", "Path to config file")
 	flag.Parse()
+	// slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	var cfg *config.Config
 

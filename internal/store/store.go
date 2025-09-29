@@ -11,4 +11,5 @@ type Store interface {
 	Set(key, value string) error
 	Incr(key string) (int, error)
 	Decr(key string) (int, error)
+	Del(key string) error
 }

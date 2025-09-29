@@ -8,4 +8,5 @@ var (
 	SetCommand  HandlerCommand = HandlerCommand{'S', 'E', 'T'}
 	IncrCommand HandlerCommand = HandlerCommand{'I', 'N', 'C'}
 	DecrCommand HandlerCommand = HandlerCommand{'D', 'E', 'C'}
+	DelCommand  HandlerCommand = HandlerCommand{'D', 'E', 'L'}
 )

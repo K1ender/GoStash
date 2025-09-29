@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"errors"
+	"io"
+	"log/slog"
 	"net"
 
 	"github.com/k1ender/go-stash/internal/store"
@@ -35,6 +38,9 @@ func NewHandler() *Handler {
 	decrHandler := NewDecrHandler(store)
 	handlers[DecrCommand] = decrHandler
 
+	delHandler := NewDelHandler(store)
+	handlers[DelCommand] = delHandler
+
 	return &Handler{
 		handlers: handlers,
 	}
@@ -45,10 +51,13 @@ func NewHandler() *Handler {
 // response back to the client. If an error occurs at any stage, an error response is sent
 // and the connection is closed. Currently, only the GetCommand is supported; all other
 // commands result in an error response.
-func (h *Handler) Handle(client net.Conn) (error) {
+func (h *Handler) Handle(client net.Conn) error {
 	cmd := [1024]byte{}
 
 	_, err := client.Read(cmd[:])
+	if errors.Is(err, io.EOF) {
+		return nil
+	}
 	if err != nil {
 		h.fail(client)
 		return err
@@ -58,6 +67,7 @@ func (h *Handler) Handle(client net.Conn) (error) {
 
 	switch HandlerCommand(cmd[:3]) {
 	case GetCommand:
+		slog.Debug("Received GET command")
 		handler := h.handlers[GetCommand]
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
@@ -65,6 +75,7 @@ func (h *Handler) Handle(client net.Conn) (error) {
 			return nil
 		}
 	case SetCommand:
+		slog.Debug("Received SET command")
 		handler := h.handlers[SetCommand]
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
@@ -72,6 +83,7 @@ func (h *Handler) Handle(client net.Conn) (error) {
 			return nil
 		}
 	case IncrCommand:
+		slog.Debug("Received INC command")
 		handler := h.handlers[IncrCommand]
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
@@ -79,7 +91,16 @@ func (h *Handler) Handle(client net.Conn) (error) {
 			return nil
 		}
 	case DecrCommand:
+		slog.Debug("Received DEC command")
 		handler := h.handlers[DecrCommand]
+		response, err = handler.Handle(cmd[:])
+		if err != nil {
+			h.fail(client)
+			return nil
+		}
+	case DelCommand:
+		slog.Debug("Received DEL command")
+		handler := h.handlers[DelCommand]
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)
