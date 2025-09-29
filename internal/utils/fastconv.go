@@ -1,6 +1,9 @@
 package utils
 
-import "errors"
+import (
+	"errors"
+	"math"
+)
 
 func FastStringToInt(s string) (int, error) {
 	if len(s) == 0 {
@@ -16,16 +19,27 @@ func FastStringToInt(s string) (int, error) {
 		negative = true
 		start = 1
 	}
-	
+
 	var result int
 	for i := start; i < len(s); i++ {
 		if s[i] < '0' || s[i] > '9' {
 			return 0, errors.New("invalid integer string")
 		}
-		result = result*10 + int(s[i]-'0')
-	}
-	if negative {
-		result = -result
+		digit := int(s[i] - '0')
+
+		if negative {
+			// Check underflow: result*10 - digit >= math.MinInt
+			if result < (math.MinInt+digit)/10 {
+				return 0, errors.New("integer underflow")
+			}
+			result = result*10 - digit
+		} else {
+			// Check overflow: result*10 + digit <= math.MaxInt
+			if result > (math.MaxInt-digit)/10 {
+				return 0, errors.New("integer overflow")
+			}
+			result = result*10 + digit
+		}
 	}
 
 	return result, nil
