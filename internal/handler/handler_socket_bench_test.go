@@ -36,12 +36,15 @@ func startTestServer(tb testing.TB) (addr string, stop func()) {
 func BenchmarkSocketGetHandler(b *testing.B) {
 	addr, stop := startTestServer(b)
 	defer stop()
+
 	time.Sleep(50 * time.Millisecond)
+
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		b.Fatalf("dial: %v", err)
 	}
 	defer conn.Close()
+
 	cmd := []byte("GET\x00" + strconv.Itoa(len("foo")) + "\x00foo\r\n")
 	for i := 0; i < b.N; i++ {
 		conn.Write(cmd)
@@ -53,13 +56,17 @@ func BenchmarkSocketGetHandler(b *testing.B) {
 func BenchmarkSocketSetHandler(b *testing.B) {
 	addr, stop := startTestServer(b)
 	defer stop()
+
 	time.Sleep(50 * time.Millisecond)
+
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		b.Fatalf("dial: %v", err)
 	}
 	defer conn.Close()
+
 	cmd := []byte("SET\x00" + strconv.Itoa(len("foo")) + "\x00foo\x00" + strconv.Itoa(len("bar")) + "\x00bar\r\n")
+
 	for i := 0; i < b.N; i++ {
 		conn.Write(cmd)
 		buf := make([]byte, 128)
@@ -70,17 +77,23 @@ func BenchmarkSocketSetHandler(b *testing.B) {
 func BenchmarkSocketIncrHandler(b *testing.B) {
 	addr, stop := startTestServer(b)
 	defer stop()
+
 	time.Sleep(50 * time.Millisecond)
+
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		b.Fatalf("dial: %v", err)
 	}
 	defer conn.Close()
+	
 	setCmd := []byte("SET\x00" + strconv.Itoa(len("foo")) + "\x00foo\x00" + strconv.Itoa(len("0")) + "\x000\r\n")
+
 	conn.Write(setCmd)
 	buf := make([]byte, 128)
 	conn.Read(buf)
+
 	cmd := []byte("INC\x00" + strconv.Itoa(len("foo")) + "\x00foo\r\n")
+
 	for i := 0; i < b.N; i++ {
 		conn.Write(cmd)
 		conn.Read(buf)
@@ -90,17 +103,21 @@ func BenchmarkSocketIncrHandler(b *testing.B) {
 func BenchmarkSocketDecrHandler(b *testing.B) {
 	addr, stop := startTestServer(b)
 	defer stop()
+
 	time.Sleep(50 * time.Millisecond)
+
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		b.Fatalf("dial: %v", err)
 	}
 	defer conn.Close()
-	// сначала установим foo=0
+
 	setCmd := []byte("SET\x00" + strconv.Itoa(len("foo")) + "\x00foo\x00" + strconv.Itoa(len("0")) + "\x000\r\n")
+
 	conn.Write(setCmd)
 	buf := make([]byte, 128)
 	conn.Read(buf)
+
 	cmd := []byte("DEC\x00" + strconv.Itoa(len("foo")) + "\x00foo\r\n")
 	for i := 0; i < b.N; i++ {
 		conn.Write(cmd)
@@ -111,15 +128,20 @@ func BenchmarkSocketDecrHandler(b *testing.B) {
 func BenchmarkSocketDelHandler(b *testing.B) {
 	addr, stop := startTestServer(b)
 	defer stop()
+
 	time.Sleep(50 * time.Millisecond)
+
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		b.Fatalf("dial: %v", err)
 	}
 	defer conn.Close()
+
 	setCmd := []byte("SET\x00" + strconv.Itoa(len("foo")) + "\x00foo\x00" + strconv.Itoa(len("bar")) + "\x00bar\r\n")
+
 	cmd := []byte("DEL\x00" + strconv.Itoa(len("foo")) + "\x00foo\r\n")
 	buf := make([]byte, 128)
+	
 	for i := 0; i < b.N; i++ {
 		conn.Write(setCmd)
 		conn.Read(buf)
