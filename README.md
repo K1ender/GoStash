@@ -8,9 +8,10 @@ GoStash is a lightweight in-memory key-value cache inspired by Redis and Memcach
 
 - **In-memory key-value storage** - Fast HashMap-based storage with thread-safe operations
 - **Binary protocol support** - Custom binary protocol for efficient communication
+- **Multiple commands** - GET, SET, INCR, DECR, DEL operations with proper serialization
 - **Configurable server** - Support for both file-based and CLI configuration
 - **Concurrent client handling** - Each client connection handled in a separate goroutine
-- **Basic commands** - GET and SET operations with proper serialization
+- **High performance** - Sub-microsecond operation latency for core commands
 - **Small codebase** - Intended for learning, experimentation and lightweight caching
 
 > Note: GoStash is an independent project and not a drop-in replacement for Redis or Memcached. Protocol and feature set are intentionally minimal.
@@ -28,10 +29,13 @@ GoStash follows a clean, modular architecture:
 
 ### Protocol
 
-GoStash uses a custom binary protocol:
+GoStash uses a custom binary protocol for all operations:
 
 - **GET**: `GET\0<keyLen>\0<key>\r\n`
 - **SET**: `SET\0<keyLen>\0<key>\0<valueLen>\0<value>\r\n`
+- **INCR**: `INC\0<keyLen>\0<key>\r\n`
+- **DECR**: `DEC\0<keyLen>\0<key>\r\n`
+- **DEL**: `DEL\0<keyLen>\0<key>\r\n`
 
 ## Project Structure
 
@@ -48,12 +52,16 @@ GoStash uses a custom binary protocol:
 │   │   ├── handler.go   # Main handler coordination
 │   │   ├── get.go       # GET command implementation
 │   │   ├── set.go       # SET command implementation
+│   │   ├── incr.go      # INCR command implementation
+│   │   ├── decr.go      # DECR command implementation
+│   │   ├── del.go       # DEL command implementation
 │   │   ├── commands.go  # Command definitions
 │   │   └── responses.go # Response utilities
 │   ├── server/          # TCP server implementation
 │   └── store/           # Storage backends
 │       ├── store.go     # Storage interface
-│       └── hashmap.go   # HashMap implementation
+│       ├── hashmap.go   # HashMap implementation
+│       └── sharded.go   # Sharded implementation
 ├── .config.stash.example # Example configuration file
 └── go.mod
 ```
@@ -152,26 +160,53 @@ port=8080
 
 ## Protocol Documentation
 
-GoStash implements a simple binary protocol for client-server communication:
+GoStash implements a simple binary protocol for client-server communication. All commands use null bytes (`\0`) as delimiters and end with `\r\n`.
 
-### GET Command
+### Supported Commands
+
+#### GET Command
 
 **Format:** `GET\0<keyLen>\0<key>\r\n`
-
 **Example:** To get the value for key "mykey":
 
 ```
 GET\0005\0mykey\r\n
 ```
 
-### SET Command
+#### SET Command
 
 **Format:** `SET\0<keyLen>\0<key>\0<valueLen>\0<value>\r\n`
-
 **Example:** To set key "mykey" to value "myvalue":
 
 ```
 SET\0005\0mykey\0007\0myvalue\r\n
+```
+
+#### INCR Command
+
+**Format:** `INC\0<keyLen>\0<key>\r\n`
+**Example:** To increment key "counter":
+
+```
+INC\0007\0counter\r\n
+```
+
+#### DECR Command
+
+**Format:** `DEC\0<keyLen>\0<key>\r\n`
+**Example:** To decrement key "counter":
+
+```
+DEC\0007\0counter\r\n
+```
+
+#### DEL Command
+
+**Format:** `DEL\0<keyLen>\0<key>\r\n`
+**Example:** To delete key "mykey":
+
+```
+DEL\0005\0mykey\r\n
 ```
 
 ### Response Format
@@ -181,15 +216,34 @@ SET\0005\0mykey\0007\0myvalue\r\n
 
 ## Benchmarks
 
-Socket handler performance (12th Gen Intel(R) Core(TM) i5-12400F, Go 1.25.1):
+Performance benchmarks (12th Gen Intel(R) Core(TM) i5-12400F, Go 1.25.1):
+
+### Direct Handler Performance
 
 ```
-BenchmarkSocketGetHandler-12      946870    1272 ns/op   368 B/op   7 allocs/op
-BenchmarkSocketSetHandler-12      822333    1253 ns/op   368 B/op   7 allocs/op
-BenchmarkSocketIncrHandler-12     925058    1959 ns/op   240 B/op   6 allocs/op
-BenchmarkSocketDecrHandler-12     831534    1208 ns/op   240 B/op   6 allocs/op
-BenchmarkSocketDelHandler-12      446300    3888 ns/op   480 B/op  12 allocs/op
+BenchmarkGetHandler-12      13851630     89.23 ns/op    70 B/op    4 allocs/op
+BenchmarkSetHandler-12      10332882    116.1 ns/op     89 B/op    5 allocs/op
+BenchmarkIncrHandler-12      9525033    125.7 ns/op     72 B/op    4 allocs/op
+BenchmarkDecrHandler-12      9213865    126.8 ns/op     72 B/op    5 allocs/op
+BenchmarkDelHandler-12       8784843    135.5 ns/op     70 B/op    4 allocs/op
 ```
+
+### Socket Handler Performance
+
+```
+BenchmarkSocketGetHandler-12         840018	   1255 ns/op	368 B/op	 7 allocs/op
+BenchmarkSocketSetHandler-12         826018	   1268 ns/op	368 B/op	 7 allocs/op
+BenchmarkSocketIncrHandler-12        929475	   1238 ns/op	240 B/op	 6 allocs/op
+BenchmarkSocketDecrHandler-12        965814	   1233 ns/op	240 B/op	 6 allocs/op
+BenchmarkSocketDelHandler-12         434486	   2651 ns/op	480 B/op	12 allocs/op
+BenchmarkSocketRandomKeyInserts-12   666988	   1597 ns/op	341 B/op	11 allocs/op
+```
+
+### Performance Notes
+
+- Direct handler calls achieve sub-microsecond latency (~90-140ns)
+- Socket operations include network overhead but still maintain excellent performance
+- All operations are thread-safe with minimal allocation overhead
 
 ## Development
 
