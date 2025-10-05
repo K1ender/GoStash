@@ -2,8 +2,8 @@ package store
 
 import (
 	"errors"
-	"fmt"
-	"hash/fnv"
+	"runtime"
+	"strconv"
 	"sync"
 
 	"github.com/k1ender/go-stash/internal/utils"
@@ -15,25 +15,39 @@ type shard struct {
 }
 
 type ShardedStore struct {
-	shards []*shard
+	shards    []*shard
+	numShards int
 }
 
 func NewShardedStore(numShards int) *ShardedStore {
+	if numShards <= 0 {
+		numShards = runtime.GOMAXPROCS(0) * 4
+	}
+
 	shards := make([]*shard, numShards)
-	for i := 0; i < numShards; i++ {
+	for i := range numShards {
 		shards[i] = &shard{
 			m: make(map[string]string),
 		}
 	}
 	return &ShardedStore{
-		shards: shards,
+		shards:    shards,
+		numShards: numShards,
 	}
 }
 
+func fastHash(s string) uint32 {
+	h := uint32(2166136261)
+	for i := 0; i < len(s); i++ {
+		h ^= uint32(s[i])
+		h *= 16777619
+	}
+	return h
+}
+
 func (s *ShardedStore) getShard(key string) *shard {
-	hash := fnv.New32()
-	hash.Write([]byte(key))
-	return s.shards[hash.Sum32()%uint32(len(s.shards))]
+	hash := fastHash(key)
+	return s.shards[hash%uint32(s.numShards)]
 }
 
 func (s *ShardedStore) Get(key string) (string, error) {
@@ -50,10 +64,10 @@ func (s *ShardedStore) Get(key string) (string, error) {
 
 func (s *ShardedStore) Set(key string, value string) error {
 	sh := s.getShard(key)
+	
 	sh.rw.Lock()
-	defer sh.rw.Unlock()
-
 	sh.m[key] = value
+	sh.rw.Unlock()
 
 	return nil
 }
@@ -75,7 +89,7 @@ func (s *ShardedStore) Incr(key string) (int, error) {
 	}
 
 	intValue := val + 1
-	sh.m[key] = fmt.Sprintf("%d", intValue)
+	sh.m[key] = strconv.Itoa(intValue)
 	return intValue, nil
 }
 
@@ -96,7 +110,7 @@ func (s *ShardedStore) Decr(key string) (int, error) {
 	}
 
 	intValue := val - 1
-	sh.m[key] = fmt.Sprintf("%d", intValue)
+	sh.m[key] = strconv.Itoa(intValue)
 	return intValue, nil
 }
 

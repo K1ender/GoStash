@@ -2,7 +2,7 @@ package store
 
 import (
 	"errors"
-	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/k1ender/go-stash/internal/utils"
@@ -50,7 +50,7 @@ func (s *HashMapStore) Incr(key string) (int, error) {
 	}
 
 	intValue := val + 1
-	s.data[key] = fmt.Sprintf("%d", intValue)
+	s.data[key] = strconv.Itoa(intValue)
 	return intValue, nil
 }
 
@@ -70,7 +70,7 @@ func (s *HashMapStore) Decr(key string) (int, error) {
 	}
 
 	intValue := val - 1
-	s.data[key] = fmt.Sprintf("%d", intValue)
+	s.data[key] = strconv.Itoa(intValue)
 	return intValue, nil
 }
 
