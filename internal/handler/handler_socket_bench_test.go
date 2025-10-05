@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/k1ender/go-stash/internal/store"
 )
 
 func startTestServer(tb testing.TB) (addr string, stop func()) {
@@ -12,7 +14,10 @@ func startTestServer(tb testing.TB) (addr string, stop func()) {
 	if err != nil {
 		tb.Fatalf("failed to listen: %v", err)
 	}
-	h := NewHandler()
+
+	store := store.NewShardedStore(32)
+	h := NewHandler(store)
+
 	go func() {
 		for {
 			conn, err := ln.Accept()
@@ -71,7 +76,6 @@ func BenchmarkSocketIncrHandler(b *testing.B) {
 		b.Fatalf("dial: %v", err)
 	}
 	defer conn.Close()
-	// сначала установим foo=0
 	setCmd := []byte("SET\x00" + strconv.Itoa(len("foo")) + "\x00foo\x00" + strconv.Itoa(len("0")) + "\x000\r\n")
 	conn.Write(setCmd)
 	buf := make([]byte, 128)

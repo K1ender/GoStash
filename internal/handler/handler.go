@@ -21,9 +21,7 @@ type Handler struct {
 	handlers map[HandlerCommand]CommandHandler
 }
 
-func NewHandler() *Handler {
-	store := store.NewHashMapStore()
-
+func NewHandler(store store.Store) *Handler {
 	handlers := make(map[HandlerCommand]CommandHandler)
 
 	getHandler := NewGetHandler(store)

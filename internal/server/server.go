@@ -7,6 +7,7 @@ import (
 
 	"github.com/k1ender/go-stash/internal/config"
 	"github.com/k1ender/go-stash/internal/handler"
+	"github.com/k1ender/go-stash/internal/store"
 )
 
 type Server struct {
@@ -39,7 +40,9 @@ func (s *Server) Start() {
 	}
 	defer conn.Close()
 
-	handler := handler.NewHandler()
+	store := store.NewShardedStore(32)
+
+	handler := handler.NewHandler(store)
 
 	fmt.Printf("Server started on %s:%d\n", s.cfg.Host, s.cfg.Port)
 
