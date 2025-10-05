@@ -23,6 +23,9 @@ func NewShardedStore(numShards int) *ShardedStore {
 	if numShards <= 0 {
 		numShards = runtime.GOMAXPROCS(0) * 4
 	}
+	if numShards > 16 {
+		numShards = 16
+	}
 
 	shards := make([]*shard, numShards)
 	for i := range numShards {
@@ -38,11 +41,11 @@ func NewShardedStore(numShards int) *ShardedStore {
 
 func fastHash(s string) uint32 {
 	h := uint32(2166136261)
-	for i := 0; i < len(s); i++ {
+	for i := range s {
 		h ^= uint32(s[i])
 		h *= 16777619
 	}
-	return h
+	return h ^ (h >> 16)
 }
 
 func (s *ShardedStore) getShard(key string) *shard {
@@ -52,19 +55,21 @@ func (s *ShardedStore) getShard(key string) *shard {
 
 func (s *ShardedStore) Get(key string) (string, error) {
 	sh := s.getShard(key)
-	sh.rw.RLock()
-	defer sh.rw.RUnlock()
 
-	if value, exists := sh.m[key]; exists {
-		return value, nil
+	sh.rw.RLock()
+	value, exists := sh.m[key]
+	sh.rw.RUnlock()
+
+	if !exists {
+		return "", ErrNotFound
 	}
 
-	return "", ErrNotFound
+	return value, nil
 }
 
 func (s *ShardedStore) Set(key string, value string) error {
 	sh := s.getShard(key)
-	
+
 	sh.rw.Lock()
 	sh.m[key] = value
 	sh.rw.Unlock()
