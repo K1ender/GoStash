@@ -1,12 +1,12 @@
 package handler
 
 // Command always in uppercase string with len 3
-type HandlerCommand [3]byte
+type Command [3]byte
 
 var (
-	GetCommand  HandlerCommand = HandlerCommand{'G', 'E', 'T'}
-	SetCommand  HandlerCommand = HandlerCommand{'S', 'E', 'T'}
-	IncrCommand HandlerCommand = HandlerCommand{'I', 'N', 'C'}
-	DecrCommand HandlerCommand = HandlerCommand{'D', 'E', 'C'}
-	DelCommand  HandlerCommand = HandlerCommand{'D', 'E', 'L'}
+	GetCommand  Command = Command{'G', 'E', 'T'}
+	SetCommand  Command = Command{'S', 'E', 'T'}
+	IncrCommand Command = Command{'I', 'N', 'C'}
+	DecrCommand Command = Command{'D', 'E', 'C'}
+	DelCommand  Command = Command{'D', 'E', 'L'}
 )

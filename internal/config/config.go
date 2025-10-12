@@ -96,6 +96,8 @@ func load(cfg *Config, getter Getter) {
 							panic(fmt.Sprintf("invalid default int value for %s: %s", tag, after))
 						}
 						val = intVal
+					default:
+						panic("unsupported field type for default value")
 					}
 					break
 				}
@@ -120,6 +122,8 @@ func load(cfg *Config, getter Getter) {
 				panic(fmt.Sprintf("unsupported type %T for int field %s", val, tag))
 			}
 			f.SetInt(intVal)
+		default:
+			panic("unsupported field type")
 		}
 	}
 }

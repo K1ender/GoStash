@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
@@ -18,11 +19,11 @@ type CommandHandler interface {
 }
 
 type Handler struct {
-	handlers map[HandlerCommand]CommandHandler
+	handlers map[Command]CommandHandler
 }
 
 func NewHandler(store store.Store) *Handler {
-	handlers := make(map[HandlerCommand]CommandHandler)
+	handlers := make(map[Command]CommandHandler)
 
 	getHandler := NewGetHandler(store)
 	handlers[GetCommand] = getHandler
@@ -44,33 +45,32 @@ func NewHandler(store store.Store) *Handler {
 	}
 }
 
-// Handle processes an incoming client connection by reading a command from the client,
-// dispatching it to the appropriate handler based on the command type, and writing the
-// response back to the client. If an error occurs at any stage, an error response is sent
-// and the connection is closed. Currently, only the GetCommand is supported; all other
-// commands result in an error response.
-func (h *Handler) Handle(client net.Conn) error {
-	cmd := [1024]byte{}
-
-	_, err := client.Read(cmd[:])
-	if errors.Is(err, io.EOF) {
-		return nil
-	}
+// Handle processes a client connection by reading a command, dispatching it to the appropriate handler,
+// and sending the response back to the client.
+//
+// Parameters:
+//   - client: The client connection to handle.
+//
+// Returns:
+//   - A boolean indicating whether the connection should be closed.
+//   - An error if any occurred during processing.
+func (h *Handler) Handle(client net.Conn) (bool, error) {
+	cmd, err := io.ReadAll(client)
 	if err != nil {
 		h.fail(client)
-		return err
+		return true, fmt.Errorf("failed to read command from client: %w", err)
 	}
 
 	var response Response
 
-	switch HandlerCommand(cmd[:3]) {
+	switch Command(cmd[:3]) {
 	case GetCommand:
 		slog.Debug("Received GET command")
 		handler := h.handlers[GetCommand]
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)
-			return nil
+			return false, fmt.Errorf("failed to handle GET command: %w", err)
 		}
 	case SetCommand:
 		slog.Debug("Received SET command")
@@ -78,7 +78,7 @@ func (h *Handler) Handle(client net.Conn) error {
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)
-			return nil
+			return false, fmt.Errorf("failed to handle SET command: %w", err)
 		}
 	case IncrCommand:
 		slog.Debug("Received INC command")
@@ -86,7 +86,7 @@ func (h *Handler) Handle(client net.Conn) error {
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)
-			return nil
+			return false, fmt.Errorf("failed to handle INC command: %w", err)
 		}
 	case DecrCommand:
 		slog.Debug("Received DEC command")
@@ -94,7 +94,7 @@ func (h *Handler) Handle(client net.Conn) error {
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)
-			return nil
+			return false, fmt.Errorf("failed to handle DEC command: %w", err)
 		}
 	case DelCommand:
 		slog.Debug("Received DEL command")
@@ -102,23 +102,30 @@ func (h *Handler) Handle(client net.Conn) error {
 		response, err = handler.Handle(cmd[:])
 		if err != nil {
 			h.fail(client)
-			return nil
+			return false, fmt.Errorf("failed to handle DEL command: %w", err)
 		}
 	default:
 		h.fail(client)
-		return nil
+		return false, errors.New("unknown command")
 	}
 
 	data, err := response.Serialize()
 	if err != nil {
 		h.fail(client)
-		return nil
+		return false, fmt.Errorf("failed to serialize response: %w", err)
 	}
 
-	client.Write(data)
-	return nil
+	_, err = client.Write(data)
+	if err != nil {
+		return true, fmt.Errorf("failed to write response to client: %w", err)
+	}
+
+	return false, nil
 }
 
 func (h *Handler) fail(c net.Conn) {
-	c.Write(ErrResponse)
+	_, err := c.Write(ErrResponse)
+	if err != nil {
+		return
+	}
 }

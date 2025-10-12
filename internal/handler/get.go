@@ -9,6 +9,7 @@ import (
 	"github.com/k1ender/go-stash/internal/store"
 )
 
+// GetRequest
 // GET\03\0key\r\n
 // Format explanation:
 // - Command: "GET"

@@ -9,6 +9,7 @@ import (
 	"github.com/k1ender/go-stash/internal/store"
 )
 
+// DelRequest
 // DEL\0<keyLen>\0<key>\r\n
 // Example: DEL\0\x03\0foo\r\n
 // Command: "DEL"
@@ -38,7 +39,7 @@ func DeserializeDel(data []byte) (*DelRequest, error) {
 	if i2 == -1 {
 		return nil, errors.New("invalid format: no second delimiter")
 	}
-	
+
 	i2 += i1 + 1
 
 	command := string(data[:i1])

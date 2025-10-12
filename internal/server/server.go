@@ -40,9 +40,9 @@ func (s *Server) Start() {
 	}
 	defer conn.Close()
 
-	store := store.NewShardedStore(32)
+	shardedStore := store.NewShardedStore(32)
 
-	handler := handler.NewHandler(store)
+	newHandler := handler.NewHandler(shardedStore)
 
 	fmt.Printf("Server started on %s:%d\n", s.cfg.Host, s.cfg.Port)
 
@@ -55,9 +55,12 @@ func (s *Server) Start() {
 		go func(client net.Conn) {
 			defer client.Close()
 			for {
-				if err := handler.Handle(client); err != nil {
-					slog.Error("error handling client", "error", err)
-					break
+				isFatal, err := newHandler.Handle(client)
+				if err != nil {
+					slog.Error("error handling client request", "error", err)
+					if isFatal {
+						return
+					}
 				}
 			}
 		}(client)
