@@ -49,7 +49,7 @@ func BenchmarkSocketGetHandler(b *testing.B) {
 	defer conn.Close()
 
 	cmd := []byte("GET\x00" + strconv.Itoa(len("foo")) + "\x00foo\r\n")
-	
+
 	for b.Loop() {
 		conn.Write(cmd)
 		buf := make([]byte, 128)
@@ -71,7 +71,6 @@ func BenchmarkSocketSetHandler(b *testing.B) {
 
 	cmd := []byte("SET\x00" + strconv.Itoa(len("foo")) + "\x00foo\x00" + strconv.Itoa(len("bar")) + "\x00bar\r\n")
 
-	
 	for b.Loop() {
 		conn.Write(cmd)
 		buf := make([]byte, 128)
@@ -99,7 +98,6 @@ func BenchmarkSocketIncrHandler(b *testing.B) {
 
 	cmd := []byte("INC\x00" + strconv.Itoa(len("foo")) + "\x00foo\r\n")
 
-	
 	for b.Loop() {
 		conn.Write(cmd)
 		conn.Read(buf)
@@ -126,7 +124,6 @@ func BenchmarkSocketDecrHandler(b *testing.B) {
 
 	cmd := []byte("DEC\x00" + strconv.Itoa(len("foo")) + "\x00foo\r\n")
 
-	
 	for b.Loop() {
 		conn.Write(cmd)
 		conn.Read(buf)
@@ -150,7 +147,6 @@ func BenchmarkSocketDelHandler(b *testing.B) {
 	cmd := []byte("DEL\x00" + strconv.Itoa(len("foo")) + "\x00foo\r\n")
 	buf := make([]byte, 128)
 
-	
 	for b.Loop() {
 		conn.Write(setCmd)
 		conn.Read(buf)
@@ -173,7 +169,6 @@ func BenchmarkSocketRandomKeyInserts(b *testing.B) {
 
 	buf := make([]byte, 128)
 
-	
 	for i := 0; b.Loop(); i++ {
 		key := fmt.Sprintf("key_%d_%d", i, rand.Intn(10000))
 		value := fmt.Sprintf("value_%d", rand.Intn(1000))

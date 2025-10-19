@@ -34,30 +34,22 @@ func (r *DelRequest) Serialize() []byte {
 
 func DeserializeDel(data []byte) (*DelRequest, error) {
 	i1 := constants.CommandKeyLen
-
 	i2 := bytes.IndexByte(data[i1+1:], 0)
 	if i2 == -1 {
-		return nil, errors.New("invalid format: no second delimiter")
+		return nil, errors.New("invalid format")
 	}
-
 	i2 += i1 + 1
 
-	command := string(data[:i1])
-	keyLenStr := string(data[i1+1 : i2])
-	keyLen, err := strconv.Atoi(keyLenStr)
+	keyLen, err := strconv.Atoi(string(data[i1+1 : i2]))
 	if err != nil {
 		return nil, err
 	}
 
-	key := string(data[i2+1 : i2+keyLen+1])
-	if len(key) != keyLen {
-		return nil, errors.New("key length mismatch")
-	}
-
+	key := data[i2+1 : i2+1+keyLen]
 	return &DelRequest{
-		Command: command,
+		Command: string(data[:i1]),
 		KeyLen:  keyLen,
-		Key:     key,
+		Key:     string(key),
 	}, nil
 }
 

@@ -8,9 +8,15 @@ import (
 )
 
 func main() {
+	// profiler.StartPprof()
 	filepath := flag.String("config", "", "Path to config file")
 	flag.Parse()
-	// slog.SetLogLoggerLevel(slog.LevelDebug)
+
+	// logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	// 	AddSource: true,
+	// 	Level:     slog.LevelDebug,
+	// }))
+	// slog.SetDefault(logger)
 
 	var cfg *config.Config
 

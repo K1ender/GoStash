@@ -1,6 +1,8 @@
 package main
 
-import "net"
+import (
+	"net"
+)
 
 func main() {
 	conn, err := net.Dial("tcp", "localhost:19201")

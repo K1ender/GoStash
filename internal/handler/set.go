@@ -2,7 +2,7 @@ package handler
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"strconv"
 
 	"github.com/k1ender/go-stash/internal/constants"
@@ -35,60 +35,38 @@ func (r *SetRequest) Serialize() []byte {
 }
 
 func DeserializeSet(data []byte) (*SetRequest, error) {
-	// SET\0<keyLen>\0<key>\0<valueLen>\0<value>\r\n
 	i1 := constants.CommandKeyLen
-
 	i2 := bytes.IndexByte(data[i1+1:], 0)
 	if i2 == -1 {
-		return nil, fmt.Errorf("invalid format: no second delimiter")
+		return nil, errors.New("invalid format")
 	}
-
 	i2 += i1 + 1
 
 	i3 := bytes.IndexByte(data[i2+1:], 0)
 	if i3 == -1 {
-		return nil, fmt.Errorf("invalid format: no third delimiter")
+		return nil, errors.New("invalid format")
 	}
-
 	i3 += i2 + 1
 
 	i4 := bytes.IndexByte(data[i3+1:], 0)
 	if i4 == -1 {
-		return nil, fmt.Errorf("invalid format: no fourth delimiter")
+		return nil, errors.New("invalid format")
 	}
-
 	i4 += i3 + 1
 
-	command := string(data[:i1])
-	keyLenStr := string(data[i1+1 : i2])
-	keyLen, err := strconv.Atoi(keyLenStr)
+	keyLen, err := strconv.Atoi(string(data[i1+1 : i2]))
 	if err != nil {
 		return nil, err
 	}
+	key := data[i2+1 : i2+1+keyLen]
 
-	key := string(data[i2+1 : i2+keyLen+1])
-	if len(key) != keyLen {
-		return nil, fmt.Errorf("key length mismatch")
-	}
-
-	valueLenStr := string(data[i3+1 : i4])
-	valueLen, err := strconv.Atoi(valueLenStr)
+	valueLen, err := strconv.Atoi(string(data[i3+1 : i4]))
 	if err != nil {
 		return nil, err
 	}
+	value := data[i4+1 : i4+1+valueLen]
 
-	value := string(data[i4+1 : i4+valueLen+1])
-	if len(value) != valueLen {
-		return nil, fmt.Errorf("value length mismatch")
-	}
-
-	return &SetRequest{
-		Command:  command,
-		KeyLen:   keyLen,
-		Key:      key,
-		ValueLen: valueLen,
-		Value:    value,
-	}, nil
+	return &SetRequest{Command: string(data[:i1]), Key: string(key), Value: string(value)}, nil
 }
 
 type SetResponse struct {

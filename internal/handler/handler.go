@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"net"
+	"sync"
 
 	"github.com/k1ender/go-stash/internal/store"
 )
@@ -45,6 +44,12 @@ func NewHandler(store store.Store) *Handler {
 	}
 }
 
+var bufPool = sync.Pool{
+	New: func() any {
+		return make([]byte, 1024)
+	},
+}
+
 // Handle processes a client connection by reading a command, dispatching it to the appropriate handler,
 // and sending the response back to the client.
 //
@@ -55,58 +60,28 @@ func NewHandler(store store.Store) *Handler {
 //   - A boolean indicating whether the connection should be closed.
 //   - An error if any occurred during processing.
 func (h *Handler) Handle(client net.Conn) (bool, error) {
-	cmd, err := io.ReadAll(client)
+	buf := bufPool.Get().([]byte)
+	defer bufPool.Put(buf)
+
+	n, err := client.Read(buf)
+	cmd := buf[:n]
 	if err != nil {
+		slog.Debug("failed to read command from client", slog.Any("error", err))
 		h.fail(client)
 		return true, fmt.Errorf("failed to read command from client: %w", err)
 	}
 
-	var response Response
-
-	switch Command(cmd[:3]) {
-	case GetCommand:
-		slog.Debug("Received GET command")
-		handler := h.handlers[GetCommand]
-		response, err = handler.Handle(cmd[:])
-		if err != nil {
-			h.fail(client)
-			return false, fmt.Errorf("failed to handle GET command: %w", err)
-		}
-	case SetCommand:
-		slog.Debug("Received SET command")
-		handler := h.handlers[SetCommand]
-		response, err = handler.Handle(cmd[:])
-		if err != nil {
-			h.fail(client)
-			return false, fmt.Errorf("failed to handle SET command: %w", err)
-		}
-	case IncrCommand:
-		slog.Debug("Received INC command")
-		handler := h.handlers[IncrCommand]
-		response, err = handler.Handle(cmd[:])
-		if err != nil {
-			h.fail(client)
-			return false, fmt.Errorf("failed to handle INC command: %w", err)
-		}
-	case DecrCommand:
-		slog.Debug("Received DEC command")
-		handler := h.handlers[DecrCommand]
-		response, err = handler.Handle(cmd[:])
-		if err != nil {
-			h.fail(client)
-			return false, fmt.Errorf("failed to handle DEC command: %w", err)
-		}
-	case DelCommand:
-		slog.Debug("Received DEL command")
-		handler := h.handlers[DelCommand]
-		response, err = handler.Handle(cmd[:])
-		if err != nil {
-			h.fail(client)
-			return false, fmt.Errorf("failed to handle DEL command: %w", err)
-		}
-	default:
+	command := Command(cmd[:3])
+	handler, ok := h.handlers[command]
+	if !ok {
+		slog.Debug("Received unknown command", slog.Any("command", command))
 		h.fail(client)
-		return false, errors.New("unknown command")
+		return false, fmt.Errorf("unknown command: %s", command)
+	}
+	response, err := handler.Handle(cmd)
+	if err != nil {
+		h.fail(client)
+		return false, fmt.Errorf("failed to handle GET command: %w", err)
 	}
 
 	data, err := response.Serialize()

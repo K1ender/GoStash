@@ -35,7 +35,7 @@ func (s *Server) Start() {
 		),
 	)
 	if err != nil {
-		// FIXME: proper logging
+		slog.Error("failed to start server", "error", err)
 		panic(err)
 	}
 	defer conn.Close()
@@ -44,11 +44,13 @@ func (s *Server) Start() {
 
 	newHandler := handler.NewHandler(shardedStore)
 
-	fmt.Printf("Server started on %s:%d\n", s.cfg.Host, s.cfg.Port)
+	slog.Info("server started on", slog.String("host", s.cfg.Host), slog.Int("port", s.cfg.Port))
 
 	for {
 		client, err := conn.Accept()
+		slog.Debug("New connection")
 		if err != nil {
+			slog.Error("failed to accept connection", "error", err)
 			continue
 		}
 
